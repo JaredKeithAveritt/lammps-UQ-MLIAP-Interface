@@ -11,41 +11,33 @@
    See the README file in the top-level LAMMPS directory.
 ------------------------------------------------------------------------- */
 
-#ifdef PAIR_CLASS
+#ifdef COMPUTE_CLASS
 // clang-format off
-PairStyle(mliap,PairMLIAP);
+ComputeStyle(peStdev/atom,ComputeEatomStdev);
 // clang-format on
 #else
 
-#ifndef LMP_PAIR_MLIAP_H
-#define LMP_PAIR_MLIAP_H
+#ifndef LMP_COMPUTE_EATOM_STDEV_H
+#define LMP_COMPUTE_EATOM_STDEV_H
 
-#include "pair.h"
-#include "compute_eatom_stdev.h"
+#include "compute.h"
+#include "mliap_data.h"
+#include "pair_mliap.h"
 
 namespace LAMMPS_NS {
 
-class PairMLIAP : public Pair {
+class ComputeEatomStdev : public Compute {
  public:
-  friend class ComputeEatomStdev;
-  PairMLIAP(class LAMMPS *);
-  ~PairMLIAP() override;
-  void compute(int, int) override;
-  void settings(int, char **) override;
-  void coeff(int, char **) override;
-  void e_tally(class MLIAPData *);
-  void v_tally(int, int, double *, double *);
-  void init_style() override;
-  double init_one(int, int) override;
+  ComputeEatomStdev(class LAMMPS *, int, char **);
+  ~ComputeEatomStdev() override;
+  void init() override;
+  void compute_peratom() override;
   double memory_usage() override;
 
- protected:
-  virtual void allocate();
-
-  class MLIAPModel *model;
-  class MLIAPDescriptor *descriptor;
-  class MLIAPData *data;
-  bool is_child;
+ private:
+  int nmax;
+  double *eatom_stdev;
+  MLIAPData *data;
 };
 
 }    // namespace LAMMPS_NS
