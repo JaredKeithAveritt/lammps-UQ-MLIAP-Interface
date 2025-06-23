@@ -34,6 +34,7 @@ cdef extern from "mliap_data.h" namespace "LAMMPS_NS":
         double ** betas         # betas for all atoms in list
         double ** descriptors   # descriptors for all atoms in list
         double * eatoms         # energies for all atoms in list
+        double * eatoms_stdev   # standard deviation of energy for each atom in list
         double energy
         # -END- write only -END-
         int ndescriptors        # number of descriptors
@@ -72,6 +73,7 @@ cdef extern from "mliap_data.h" namespace "LAMMPS_NS":
         # -END- write only -END-
         int eflag               # indicates if energy is needed
         int vflag               # indicates if virial is needed
+        int uqflag              # flag for Uncertainty Quantification (0 off, 1 eatoms_uq on)
 
 
 cdef extern from "mliap_unified.h" namespace "LAMMPS_NS":
@@ -165,6 +167,16 @@ cdef class MLIAPDataPy:
         cdef double[:] eatoms_view = <double[:self.nlistatoms]> &self.data.eatoms[0]
         cdef double[:] value_view = value
         eatoms_view[:] = value_view
+
+    @write_only_property
+    def eatoms_stdev(self, value):
+        if self.data.uqflag == 0:
+            raise ValueError("attempt to set eatoms_stdev when uqflag is set to 0")
+        if self.data.eatoms_stdev is NULL:
+            raise ValueError("attempt to set NULL eatoms_stdev")
+        cdef double[:] eatoms_stdev_view = <double[:self.nlistatoms]> &self.data.eatoms_stdev[0]
+        cdef double[:] value_view = value
+        eatoms_stdev_view[:] = value_view
 
     @write_only_property
     def energy(self, value):
@@ -312,6 +324,10 @@ cdef class MLIAPDataPy:
     @property
     def vflag(self):
         return self.data.vflag
+
+    @property
+    def uqflag(self):
+        return self.data.uqflag
 
 
 # Interface between C and Python compute functions

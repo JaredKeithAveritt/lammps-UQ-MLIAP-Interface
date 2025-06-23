@@ -40,6 +40,8 @@ class MLIAPData : protected Pointers {
   double **betas;          // betas for all atoms in list
   double **descriptors;    // descriptors for all atoms in list
   double *eatoms;          // energies for all atoms in list
+  int uqflag;		   // flag for Uncertainty Quantification (0 off, 1 eatoms_uq on)
+  double *eatoms_stdev;    // standard deviation of energy for each atom in list
   double energy;           // energy
   int ndescriptors;        // number of descriptors
   int nparams;             // number of model parameters per element

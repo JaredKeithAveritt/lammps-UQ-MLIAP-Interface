@@ -29,7 +29,7 @@ using namespace LAMMPS_NS;
 MLIAPData::MLIAPData(LAMMPS *lmp, int gradgradflag_in, int *map_in, class MLIAPModel *model_in,
                      class MLIAPDescriptor *descriptor_in, class PairMLIAP *pairmliap_in) :
     Pointers(lmp),
-    f(nullptr), gradforce(nullptr), betas(nullptr), descriptors(nullptr), eatoms(nullptr),
+    f(nullptr), gradforce(nullptr), betas(nullptr), descriptors(nullptr), eatoms(nullptr), eatoms_stdev(nullptr),
     gamma(nullptr), gamma_row_index(nullptr), gamma_col_index(nullptr), egradient(nullptr),
     numneighs(nullptr), iatoms(nullptr), ielems(nullptr), itypes(nullptr), pair_i(nullptr),
     jatoms(nullptr), jelems(nullptr), elems(nullptr), lmp_firstneigh(nullptr), rij(nullptr),
@@ -66,6 +66,8 @@ MLIAPData::MLIAPData(LAMMPS *lmp, int gradgradflag_in, int *map_in, class MLIAPM
   nneigh_max = 0;
   nmax = 0;
   natomgamma_max = 0;
+
+  uqflag = 0; //Default uq to falls to start
 }
 
 /* ---------------------------------------------------------------------- */
@@ -75,6 +77,7 @@ MLIAPData::~MLIAPData()
   memory->destroy(betas);
   memory->destroy(descriptors);
   memory->destroy(eatoms);
+  memory->destroy(eatoms_stdev);
   memory->destroy(gamma_row_index);
   memory->destroy(gamma_col_index);
   memory->destroy(gamma);
@@ -144,6 +147,9 @@ void MLIAPData::generate_neighdata(NeighList *list_in, int eflag_in, int vflag_i
     memory->grow(betas, nlistatoms, ndescriptors, "MLIAPData:betas");
     memory->grow(descriptors, nlistatoms, ndescriptors, "MLIAPData:descriptors");
     memory->grow(eatoms, nlistatoms, "MLIAPData:eatoms");
+    if (uqflag == 1) { //Grow eatoms_stdev if uqflag is on
+      memory->grow(eatoms_stdev, nlistatoms, "MLIAPData:eatoms_stdev");
+    }
     nlistatoms_max = nlistatoms;
   }
 
@@ -296,6 +302,9 @@ double MLIAPData::memory_usage()
   bytes += (double) nlistatoms * ndescriptors * sizeof(int);    // betas
   bytes += (double) nlistatoms * ndescriptors * sizeof(int);    // descriptors
   bytes += (double) nlistatoms * sizeof(double);                // eatoms
+  if (uqflag == 1) {
+    bytes += (double) nlistatoms * sizeof(double);		// eatoms_stdev
+  }
 
   bytes += (double) natomneigh_max * sizeof(int);    // iatoms
   bytes += (double) natomneigh_max * sizeof(int);    // ielems
