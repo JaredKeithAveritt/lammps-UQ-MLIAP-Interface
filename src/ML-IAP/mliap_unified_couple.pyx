@@ -35,6 +35,7 @@ cdef extern from "mliap_data.h" namespace "LAMMPS_NS":
         double ** descriptors   # descriptors for all atoms in list
         double * eatoms         # energies for all atoms in list
         double * eatoms_stdev   # standard deviation of energy for each atom in list
+        double ** force_stdev    # standard deviation of each dimension of the force vector for each atom
         double energy
         # -END- write only -END-
         int ndescriptors        # number of descriptors
@@ -177,6 +178,16 @@ cdef class MLIAPDataPy:
         cdef double[:] eatoms_stdev_view = <double[:self.nlistatoms]> &self.data.eatoms_stdev[0]
         cdef double[:] value_view = value
         eatoms_stdev_view[:] = value_view
+
+    @write_only_property
+    def force_stdev(self, value):
+        if self.data.uqflag == 0:
+            raise ValueError("attempt to set force_stdev when uqflag is set to 0")
+        if self.data.force_stdev is NULL:
+            raise ValueError("attempt to set NULL force_stdev")
+        cdef double[:,:] force_stdev_view = <double[:self.nlistatoms, :3]> &self.data.force_stdev[0][0]
+        cdef double[:,:] value_view = value
+        force_stdev_view = value_view
 
     @write_only_property
     def energy(self, value):
