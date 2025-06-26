@@ -21,7 +21,7 @@ namespace LAMMPS_NS {
 class MLIAPData : protected Pointers {
 
  public:
-  MLIAPData(class LAMMPS *, int, int *, class MLIAPModel *, class MLIAPDescriptor *,
+  MLIAPData(class LAMMPS *, int, int, int *, class MLIAPModel *, class MLIAPDescriptor *,
             class PairMLIAP * = nullptr);
   ~MLIAPData() override;
 
@@ -40,7 +40,7 @@ class MLIAPData : protected Pointers {
   double **betas;          // betas for all atoms in list
   double **descriptors;    // descriptors for all atoms in list
   double *eatoms;          // energies for all atoms in list
-  int uqflag;		   // flag for Uncertainty Quantification (0 off, 1 eatoms_uq on)
+  int uqflag;		   // flag for Uncertainty Quantification (0 off, 1 on)
   double *eatoms_stdev;    // standard deviation of energy for each atom in list
   double energy;           // energy
   int ndescriptors;        // number of descriptors

@@ -199,13 +199,39 @@ void PairMLIAP::settings(int narg, char ** arg)
       if (descriptor != nullptr) error->all(FLERR,"Illegal multiple pair_style mliap descriptor definitions");
       if (iarg+2 > narg) utils::missing_cmd_args(FLERR, "pair_style mliap unified", error);
       MLIAPBuildUnified_t build = build_unified(arg[iarg+1], data, lmp);
-      if (iarg+3 > narg) {
+      if (iarg+3 == narg) { //Only ghostneigh flag specified
+	ghostneigh = utils::logical(FLERR, arg[iarg+2], false, lmp);
+	uqflag = 0;
+	iarg += 3;
+      } else if (iarg+4 == narg) { //Only UQ Specified
+	 if (strcmp(arg[iarg+2], "uq") == 0) {
+           if (strcmp(arg[iarg+3], "on") == 0) {
+             uqflag = 1;
+	   } else if (strcmp(arg[iarg+3], "off") == 1) {
+	     uqflag = 0;	   
+	   }
+	   //TODO: Add else statement throwing unrecognized value of uq flag error
+	 }
+	 //TODO: Add else statement throwing error
+	 iarg += 4;
+      } else if (iarg+5 == narg) { //Both ghostneigh flag and UQ flag specified
         ghostneigh = 0;
+	if (strcmp(arg[iarg+3], "uq") == 0) {
+          if (strcmp(arg[iarg+4], "on") == 0) {
+            uqflag = 1;
+	  } else if (strcmp(arg[iarg+4], "off") == 0) {
+	    uqflag = 0;
+	  }
+	  //TODO: Add else statement throwing unrecognized value of uq flag error
+	}
+	//TODO: Add else statement throwing error
+	iarg += 5;
       } else {
-        ghostneigh = utils::logical(FLERR, arg[iarg+2], false, lmp);
+	ghostneigh = 0;
+	uqflag = 0;
+	iarg += 3;
       }
 
-      iarg += 3;
       model = build.model;
       descriptor = build.descriptor;
 #else
@@ -272,7 +298,7 @@ void PairMLIAP::coeff(int narg, char **arg)
   descriptor->init();
   constexpr int gradgradflag = -1;
   delete data;
-  data = new MLIAPData(lmp, gradgradflag, map, model, descriptor, this);
+  data = new MLIAPData(lmp, gradgradflag, uqflag, map, model, descriptor, this);
   data->init();
 }
 

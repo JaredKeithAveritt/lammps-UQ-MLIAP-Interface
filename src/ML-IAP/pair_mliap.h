@@ -42,6 +42,8 @@ class PairMLIAP : public Pair {
  protected:
   virtual void allocate();
 
+  int uqflag; //Flag for Uncertainty Quantification 0 - off 1 - on
+
   class MLIAPModel *model;
   class MLIAPDescriptor *descriptor;
   class MLIAPData *data;

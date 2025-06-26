@@ -136,7 +136,8 @@ ComputeMLIAP::ComputeMLIAP(LAMMPS *lmp, int narg, char **arg) :
   for (int i = 1; i <= atom->ntypes; i++)
     map[i] = i-1;
 
-  data = new MLIAPData(lmp, gradgradflag, map, model, descriptor);
+  //Default uq_flag off for the compute
+  data = new MLIAPData(lmp, gradgradflag, 0, map, model, descriptor);
 
   size_array_rows = data->size_array_rows;
   size_array_cols = data->size_array_cols;

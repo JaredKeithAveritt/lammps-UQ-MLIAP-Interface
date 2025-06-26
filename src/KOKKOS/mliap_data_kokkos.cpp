@@ -32,7 +32,7 @@ MLIAPDataKokkos<DeviceType>::MLIAPDataKokkos(LAMMPS *lmp_in, int gradgradflag_in
     class MLIAPModel* model_in,
     class MLIAPDescriptor* descriptor_in,
     class PairMLIAPKokkos<DeviceType>* pairmliap_in) :
-    MLIAPData(lmp_in, gradgradflag_in, map_in, model_in, descriptor_in, pairmliap_in),
+    MLIAPData(lmp_in, gradgradflag_in, 0, map_in, model_in, descriptor_in, pairmliap_in), //TEMP: To get complication to work after MLIAPData constructor change
     k_pairmliap(pairmliap_in),
     lmp(lmp_in)
 {

@@ -26,7 +26,7 @@
 
 using namespace LAMMPS_NS;
 
-MLIAPData::MLIAPData(LAMMPS *lmp, int gradgradflag_in, int *map_in, class MLIAPModel *model_in,
+MLIAPData::MLIAPData(LAMMPS *lmp, int gradgradflag_in, int uqflag_in, int *map_in, class MLIAPModel *model_in,
                      class MLIAPDescriptor *descriptor_in, class PairMLIAP *pairmliap_in) :
     Pointers(lmp),
     f(nullptr), gradforce(nullptr), betas(nullptr), descriptors(nullptr), eatoms(nullptr), eatoms_stdev(nullptr),
@@ -36,6 +36,7 @@ MLIAPData::MLIAPData(LAMMPS *lmp, int gradgradflag_in, int *map_in, class MLIAPM
     graddesc(nullptr), model(nullptr), descriptor(nullptr), list(nullptr)
 {
   gradgradflag = gradgradflag_in;
+  uqflag = uqflag_in;
   map = map_in;
   model = model_in;
   descriptor = descriptor_in;
@@ -66,8 +67,6 @@ MLIAPData::MLIAPData(LAMMPS *lmp, int gradgradflag_in, int *map_in, class MLIAPM
   nneigh_max = 0;
   nmax = 0;
   natomgamma_max = 0;
-
-  uqflag = 0; //Default uq to falls to start
 }
 
 /* ---------------------------------------------------------------------- */
