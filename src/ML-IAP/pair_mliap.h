@@ -22,12 +22,14 @@ PairStyle(mliap,PairMLIAP);
 
 #include "pair.h"
 #include "compute_eatom_stdev.h"
+#include "compute_force_stdev.h"
 
 namespace LAMMPS_NS {
 
 class PairMLIAP : public Pair {
  public:
   friend class ComputeEatomStdev;
+  friend class ComputeForceAtomStdev;
   PairMLIAP(class LAMMPS *);
   ~PairMLIAP() override;
   void compute(int, int) override;
