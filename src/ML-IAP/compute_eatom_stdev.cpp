@@ -65,12 +65,13 @@ void ComputeEatomStdev::compute_peratom()
 {
 
   //Resize or create eatom_stdev array if needed
-  if (eatom_stdev == nullptr || atom->nlocal > nmax) {
+  if (eatom_stdev == nullptr || atom->nmax > nmax) {
     if (eatom_stdev) {
       memory->destroy(eatom_stdev);
     }
     nmax = atom->nmax;
     memory->create(eatom_stdev, nmax, "compute_eatom_stdev:eatom_stdev");
+    vector_atom = eatom_stdev;
   }
 
   //Check if eatom_stdev exists in data
