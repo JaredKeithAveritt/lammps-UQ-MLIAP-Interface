@@ -26,15 +26,17 @@ cdef extern from "mliap_data.h" namespace "LAMMPS_NS":
         int zoffset
         int ndims_force
         int ndims_virial
+        int * extra_properties_dims # dimensions of data for each extra property
         # -END- may not need -END-
         int size_gradforce
         # ----- write only -----
         double ** f
         double ** gradforce
-        double ** betas         # betas for all atoms in list
-        double ** descriptors   # descriptors for all atoms in list
-        double * eatoms         # energies for all atoms in list
-        double * eatoms_stdev   # standard deviation of energy for each atom in list
+        double ** betas                # betas for all atoms in list
+        double ** descriptors          # descriptors for all atoms in list
+        double * eatoms                # energies for all atoms in list
+        double * eatoms_stdev          # standard deviation of energy for each atom in list
+        double *** extra_properties    # extra properties arrays
         double energy
         # -END- write only -END-
         int ndescriptors        # number of descriptors
@@ -88,6 +90,7 @@ cdef extern from "mliap_unified.h" namespace "LAMMPS_NS":
 
         void compute_descriptors(MLIAPData *)
         void compute_forces(MLIAPData *)
+        void compute_extra_properties(MLIAPData *)
         void set_elements(char **, int)
 
     cdef cppclass MLIAPDummyModel:
@@ -177,6 +180,15 @@ cdef class MLIAPDataPy:
         cdef double[:] eatoms_stdev_view = <double[:self.nlistatoms]> &self.data.eatoms_stdev[0]
         cdef double[:] value_view = value
         eatoms_stdev_view[:] = value_view
+
+    def set_extra_property(self, index, value):
+        if self.data.extra_properties is NULL:
+            raise ValueError("attempt to set extra_properties when it is null")
+        if self.data.extra_properties[index] is NULL:
+            raise ValueError("attempt to set extra_properties[index] when it is null")
+        cdef double[:,:] extra_property_view = <double[:self.nlistatoms, :self.data.extra_properties_dims[index]]> &self.data.extra_properties[index][0][0]
+        cdef double[:,:] value_view = value
+        extra_property_view[:,:] = value_view
 
     @write_only_property
     def energy(self, value):
@@ -350,6 +362,9 @@ cdef class MLIAPUnifiedInterface:
     def compute_forces(self, data):
         self.unified_impl.compute_forces(data)
 
+    def compute_extra_property(self, data, name, index):
+        self.unified_impl.compute_extra_property(data, name, index)
+
 
 cdef public void compute_gradients_python(unified_int, MLIAPData *data) except * with gil:
     pydata = MLIAPDataPy()
@@ -367,6 +382,11 @@ cdef public void compute_forces_python(unified_int, MLIAPData *data) except * wi
     pydata = MLIAPDataPy()
     pydata.data = data
     unified_int.compute_forces(pydata)
+
+cdef public void compute_extra_property_python(unified_int, MLIAPData *data, const char *name, int index) except * with gil:
+    pydata = MLIAPDataPy()
+    pydata.data = data
+    unified_int.compute_extra_property(pydata, name, index)
 
 
 # Create a MLIAPUnifiedInterface and connect it to the dummy model, descriptor
