@@ -28,6 +28,7 @@ class MLIAPData : protected Pointers {
   void init();
   virtual void generate_neighdata(class NeighList *, int = 0, int = 0);
   virtual void grow_neigharrays();
+  int register_extra_property(const std::string &, const int &);
   double memory_usage();
 
   int size_array_rows, size_array_cols;
@@ -42,6 +43,10 @@ class MLIAPData : protected Pointers {
   double *eatoms;          // energies for all atoms in list
   int uqflag;		   // flag for Uncertainty Quantification (0 off, 1 on)
   double *eatoms_stdev;    // standard deviation of energy for each atom in list
+  int num_extra_properties; // The number of extra properties
+  std::string *extra_properties_names; // list of string names of properties (parallel array to extra_properties_dims)
+  int *extra_properties_dims; //A list of the number of dimension for each quantity (parallel array to extra_proerties_names)
+  double ***extra_properties; //Contains the data for each extra property (number of properties, num local atoms, dimension of extra poerty)
   double energy;           // energy
   int ndescriptors;        // number of descriptors
   int nparams;             // number of model parameters per element

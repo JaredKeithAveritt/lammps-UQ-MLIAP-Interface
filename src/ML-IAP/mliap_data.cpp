@@ -29,7 +29,9 @@ using namespace LAMMPS_NS;
 MLIAPData::MLIAPData(LAMMPS *lmp, int gradgradflag_in, int uqflag_in, int *map_in, class MLIAPModel *model_in,
                      class MLIAPDescriptor *descriptor_in, class PairMLIAP *pairmliap_in) :
     Pointers(lmp),
-    f(nullptr), gradforce(nullptr), betas(nullptr), descriptors(nullptr), eatoms(nullptr), eatoms_stdev(nullptr),
+    f(nullptr), gradforce(nullptr), betas(nullptr), descriptors(nullptr), eatoms(nullptr), 
+    eatoms_stdev(nullptr), extra_properties_names(nullptr), extra_properties_dims(nullptr),
+    extra_properties(nullptr),
     gamma(nullptr), gamma_row_index(nullptr), gamma_col_index(nullptr), egradient(nullptr),
     numneighs(nullptr), iatoms(nullptr), ielems(nullptr), itypes(nullptr), pair_i(nullptr),
     jatoms(nullptr), jelems(nullptr), elems(nullptr), lmp_firstneigh(nullptr), rij(nullptr),
@@ -37,6 +39,7 @@ MLIAPData::MLIAPData(LAMMPS *lmp, int gradgradflag_in, int uqflag_in, int *map_i
 {
   gradgradflag = gradgradflag_in;
   uqflag = uqflag_in;
+  num_extra_properties = 0;
   map = map_in;
   model = model_in;
   descriptor = descriptor_in;
@@ -77,6 +80,12 @@ MLIAPData::~MLIAPData()
   memory->destroy(descriptors);
   memory->destroy(eatoms);
   memory->destroy(eatoms_stdev);
+  delete[] extra_properties_names;
+  memory->destroy(extra_properties_dims);
+  for (int i = 0; i < num_extra_properties; i++) {
+    memory->destroy(extra_properties[i]);
+  }
+  delete[] extra_properties;
   memory->destroy(gamma_row_index);
   memory->destroy(gamma_col_index);
   memory->destroy(gamma);
@@ -148,6 +157,9 @@ void MLIAPData::generate_neighdata(NeighList *list_in, int eflag_in, int vflag_i
     memory->grow(eatoms, nlistatoms, "MLIAPData:eatoms");
     if (uqflag == 1) { //Grow eatoms_stdev if uqflag is on
       memory->grow(eatoms_stdev, nlistatoms, "MLIAPData:eatoms_stdev");
+    }
+    for (int extra_prop_num = 0; extra_prop_num < num_extra_properties; extra_prop_num++) { //Grow extra_property arrays
+      memory->grow(extra_properties[extra_prop_num], nlistatoms, extra_properties_dims[extra_prop_num], "MLIAPData:extra_properties");
     }
     nlistatoms_max = nlistatoms;
   }
@@ -284,6 +296,40 @@ void MLIAPData::grow_neigharrays()
   }
 }
 
+int MLIAPData::register_extra_property(const std::string & property_name, const int & dim)
+{
+  num_extra_properties += 1;
+  //Grow the extra_properties_names and add the name to the array
+  std::string *tmp_names = new std::string[num_extra_properties];
+  if (extra_properties_names != nullptr)
+  {
+    for (int i = 0; i < num_extra_properties - 1; i++) {
+      tmp_names[i] = extra_properties_names[i];
+    } 
+    delete[] extra_properties_names;
+  }
+  extra_properties_names = tmp_names;
+  tmp_names = nullptr; //So I don't do anything stupid
+  extra_properties_names[num_extra_properties - 1] = property_name;
+  //Grow the extra_properties_dims and add the dim to the array
+  memory->grow(extra_properties_dims, num_extra_properties, "MLIAPData:extra_properties_dims");
+  extra_properties_dims[num_extra_properties - 1] = dim;
+  //Add the extra_properties array
+  double ***tmp_extra_properties = new double**[num_extra_properties];
+  if (extra_properties != nullptr)
+  {
+    for (int i = 0; i < num_extra_properties - 1; i++) {
+        tmp_extra_properties[i] = extra_properties[i];
+    }
+    delete[] extra_properties;
+  }
+  extra_properties = tmp_extra_properties;
+  tmp_extra_properties = nullptr; //So I don't do anything stupid
+  memory->create(extra_properties[num_extra_properties - 1], nlistatoms, dim, "MLIAPData:extra_properties");
+  //Return the index to compute
+  return num_extra_properties - 1;
+}
+
 double MLIAPData::memory_usage()
 {
   double bytes = 0.0;
@@ -303,6 +349,11 @@ double MLIAPData::memory_usage()
   bytes += (double) nlistatoms * sizeof(double);                // eatoms
   if (uqflag == 1) {
     bytes += (double) nlistatoms * sizeof(double);		// eatoms_stdev
+  }
+  bytes += (double) num_extra_properties * sizeof(int); //extra_properties_dims
+  for (int i = 0; i < num_extra_properties; i++) { //Iterate over each extra property
+    bytes += (double) extra_properties_names[i].capacity() * sizeof(char); //extra_properties_names
+    bytes += (double) extra_properties_dims[i] * nlistatoms * sizeof(double); //extra_properties
   }
 
   bytes += (double) natomneigh_max * sizeof(int);    // iatoms
