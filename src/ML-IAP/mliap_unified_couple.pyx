@@ -385,8 +385,9 @@ cdef public void compute_forces_python(unified_int, MLIAPData *data) except * wi
 
 cdef public void compute_extra_property_python(unified_int, MLIAPData *data, const char *name, int index) except * with gil:
     pydata = MLIAPDataPy()
+    pyName = name.decode('utf-8')
     pydata.data = data
-    unified_int.compute_extra_property(pydata, name, index)
+    unified_int.compute_extra_property(pydata, pyName, index)
 
 
 # Create a MLIAPUnifiedInterface and connect it to the dummy model, descriptor
