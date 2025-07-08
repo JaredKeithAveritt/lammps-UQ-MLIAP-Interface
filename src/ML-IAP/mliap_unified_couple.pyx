@@ -9,7 +9,7 @@ cimport cython
 from cpython.ref cimport PyObject
 from libc.stdlib cimport malloc, free
 from libc.string cimport memcpy
-
+from libcpp.unordered_map cimport unordered_map
 
 cdef extern from "lammps.h" namespace "LAMMPS_NS":
     cdef cppclass LAMMPS:
@@ -26,7 +26,7 @@ cdef extern from "mliap_data.h" namespace "LAMMPS_NS":
         int zoffset
         int ndims_force
         int ndims_virial
-        int * extra_properties_dims # dimensions of data for each extra property
+        unordered_map[char*,int] extra_properties_dims # dimensions of data for each extra property
         # -END- may not need -END-
         int size_gradforce
         # ----- write only -----
@@ -36,7 +36,7 @@ cdef extern from "mliap_data.h" namespace "LAMMPS_NS":
         double ** descriptors          # descriptors for all atoms in list
         double * eatoms                # energies for all atoms in list
         double * eatoms_stdev          # standard deviation of energy for each atom in list
-        double *** extra_properties    # extra properties arrays
+        unordered_map[char*,double**] extra_properties    # extra properties arrays
         double energy
         # -END- write only -END-
         int ndescriptors        # number of descriptors
@@ -181,12 +181,10 @@ cdef class MLIAPDataPy:
         cdef double[:] value_view = value
         eatoms_stdev_view[:] = value_view
 
-    def set_extra_property(self, index, value):
-        if self.data.extra_properties is NULL:
-            raise ValueError("attempt to set extra_properties when it is null")
-        if self.data.extra_properties[index] is NULL:
+    def set_extra_property(self,name, value):
+        if self.data.extra_properties[name] is NULL:
             raise ValueError("attempt to set extra_properties[index] when it is null")
-        cdef double[:,:] extra_property_view = <double[:self.nlistatoms, :self.data.extra_properties_dims[index]]> &self.data.extra_properties[index][0][0]
+        cdef double[:,:] extra_property_view = <double[:self.nlistatoms, :self.data.extra_properties_dims[name]]> &self.data.extra_properties[name][0][0]
         cdef double[:,:] value_view = value
         extra_property_view[:,:] = value_view
 

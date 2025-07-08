@@ -84,7 +84,8 @@ void ComputeExtraPropertyAtom::init()
   descriptor = castedPair->descriptor;
 
   //Register the extra_property compute with the data class
-  extra_property_index = data->register_extra_property(extra_property_name, size_peratom_cols);
+  //extra_property_index = data->register_extra_property(extra_property_name, size_peratom_cols);
+  data->register_extra_property(extra_property_name, size_peratom_cols);
 }
 
 /* ---------------------------------------------------------------------- */
@@ -102,7 +103,7 @@ void ComputeExtraPropertyAtom::compute_peratom()
   //Copy the values in data to eatom_stdev
   for (int i = 0; i < atom->nlocal; i++) {
     for (int j = 0; j < size_peratom_cols; j++) {
-      extra_property_data[i][j] = data->extra_properties[extra_property_index][i][j];
+      extra_property_data[i][j] = data->extra_properties[extra_property_name][i][j];
     }
   }
 }
