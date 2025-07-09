@@ -299,44 +299,9 @@ void MLIAPData::grow_neigharrays()
 
 void MLIAPData::register_extra_property(const std::string & property_name, const int & dim)
 {
-  //num_extra_properties += 1;
-  //Grow the extra_properties_names and add the name to the array
-  /*std::string *tmp_names = new std::string[num_extra_properties];
-  if (extra_properties_names != nullptr)
-  {
-    for (int i = 0; i < num_extra_properties - 1; i++) {
-      tmp_names[i] = extra_properties_names[i];
-    } 
-    delete[] extra_properties_names;
-  }
-  extra_properties_names = tmp_names;
-  tmp_names = nullptr; //So I don't do anything stupid
-  extra_properties_names[num_extra_properties - 1] = property_name;
-  //Grow the extra_properties_dims and add the dim to the array
-  memory->grow(extra_properties_dims, num_extra_properties, "MLIAPData:extra_properties_dims");
-  extra_properties_dims[num_extra_properties - 1] = dim;
-  //Add the extra_properties array
-  double ***tmp_extra_properties = new double**[num_extra_properties];
-  if (extra_properties != nullptr)
-  {
-    for (int i = 0; i < num_extra_properties - 1; i++) {
-        tmp_extra_properties[i] = extra_properties[i];
-    }
-    delete[] extra_properties;
-  }
-  extra_properties = tmp_extra_properties;
-  tmp_extra_properties = nullptr; //So I don't do anything stupid
-  memory->create(extra_properties[num_extra_properties - 1], nlistatoms, dim, "MLIAPData:extra_properties");
-  //Return the index to compute
-  return num_extra_properties - 1;*/
-  //int index = num_extra_properties; //current number of property
-  //num_extra_properties++; //add increment to next property
-  //extra_properties_names.push_back(property_name); //store property name
-  //extra_properties_dims.push_back(dim); //store property dim
   double** data = nullptr; // new double*[nlistatoms];
   memory->create(data, nlistatoms, dim, "MLIAPData:data_extra_property");
   extra_properties[property_name] = data;
-  //return index;
 }
 
 double MLIAPData::memory_usage()
