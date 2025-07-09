@@ -299,9 +299,9 @@ void MLIAPData::grow_neigharrays()
 
 void MLIAPData::register_extra_property(const std::string & property_name, const int & dim)
 {
-  double** data = nullptr; // new double*[nlistatoms];
-  memory->create(data, nlistatoms, dim, "MLIAPData:data_extra_property");
-  extra_properties[property_name] = data;
+  double** data = nullptr; 
+  memory->create(data, nlistatoms, dim, "MLIAPData:data_extra_property"); //allocate 2d array 
+  extra_properties[property_name] = data; //store data to extra_properties
 }
 
 double MLIAPData::memory_usage()

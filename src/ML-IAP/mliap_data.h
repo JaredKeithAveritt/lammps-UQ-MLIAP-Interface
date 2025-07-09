@@ -45,12 +45,8 @@ class MLIAPData : protected Pointers {
   double *eatoms_stdev;    // standard deviation of energy for each atom in list
   int num_extra_properties; // The number of extra properties
   std::string *extra_properties_names; // list of string names of properties (parallel array to extra_properties_dims)
-  //std::vector<std::string> extra_properties_names; // list of property names 
-  //int *extra_properties_dims; //A list of the number of dimension for each quantity (parallel array to extra_proerties_names)
-  //std::vector<int> extra_properies_dims; // dimension of each property, that grows for each property
-  //double ***extra_properties; //Contains the data for each extra property (number of properties, num local atoms, dimension of extra poerty)
-  std::unordered_map<std::string, double**> extra_properties; // store data for each extra property
-  std::unordered_map<std::string, int> extra_properties_dims;
+  std::unordered_map<std::string, double**> extra_properties; // maps from property name to 2d array of doubles
+  std::unordered_map<std::string, int> extra_properties_dims; // maps from property name to its dimension
   double energy;           // energy
   int ndescriptors;        // number of descriptors
   int nparams;             // number of model parameters per element
