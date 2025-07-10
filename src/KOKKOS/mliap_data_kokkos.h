@@ -48,6 +48,157 @@ enum {
 };
 // clang-format on
 
+#define MAX_NUM_EXTRA_PROPERTIES 10
+#define MAX_NAME_LENGTH 256
+
+template <class DeviceType> struct ExtraProperties {
+  using execution_space = typename DeviceType::execution_space;
+  using memory_space = typename DeviceType::memory_space;
+
+  using View2D = Kokkos::View<double**, Kokkos::LayoutRight, DeviceType>;
+
+  std::unordered_map<char*, View2D> data;  //property name
+  std::unordered_map<char*, int> dims;     //property dim
+
+
+  DAT::tdual_float_1d flat_data;
+  DAT::tdual_int_1d   offsets;
+  DAT::tdual_int_1d   dims;
+  Kokkos::DualView<char**, DeviceType> names;
+  int nproperties;
+  int nmax;
+  int max_num_elems;
+
+  ExtraProperties() : nproperties(0), nmax(0), max_num_elems(0),
+                      offsets("ExtraProperties:offsets", MAX_NUM_EXTRA_PROPERTIES),
+                      dims("ExtraProperties:dims", MAX_NUM_EXTRA_PROPERTIES),
+                      names("ExtraProperties:names", MAX_NUM_EXTRA_PROPERTIES, MAX_NAME_LENGTH) { }
+
+  /*KOKKOS_INLINE_FUNCTION
+  LMP_FLOAT& operator()(int i, int j, int k) {
+    //TODO: Implement bounds checking?
+    int base = offsets.d_view(i);
+    int dim = dims.d_view(i);
+    int index = j*dim + k;
+    return flat_data.d_view(base + index);
+  }*/
+
+  KOKKOS_INLINE_FUNCTION
+  LMP_FLOAT& operator()(const char* name, int i, int j) {
+    return data[name](i, j);
+  }
+
+  /*KOKKOS_INLINE_FUNCTION
+  int get_dim(int index) {
+    if (index >= nproperties) {
+      return -1;
+    }
+    return dims.d_view(index);
+  }*/
+
+  KOKKOS_INLINE_FUNCTION
+  int get_dim(const char* name) const {
+    auto i = dims.find(name);
+    return (i != dims.end()) ? i->second : -1;
+  }
+
+  //KOKKOS_INLINE_FUNCTION
+  //Kokkos::View<LMP_FLOAT**, Kokkos::LayoutStride, Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+  //get_2d_view(int index) {
+  //  int offset = offsets(index);
+  //  int dim = dims(index);
+  //  LMP_FLOAT* base = flat_data.data();
+  //  LMP_FLOAT* ptr_to_data = base + offset;
+  //  Kokkos::LayoutStride layout(nmax, dim, dim, 1);
+  //  Kokkos::View<LMP_FLOAT**, Kokkos::LayoutStride, Kokkos::MemoryTraits<Kokkos::Unmanaged>>
+  //          retVal(ptr_to_data, layout);
+  //  return retVal;
+  //}
+
+  LMP_FLOAT* get_data_pointer(int index) {
+    int offset = offsets(index);
+    LMP_FLOAT* base = flat_data.data();
+    LMP_FLOAT* ptr_to_data = base + offset;
+    return ptr_to_data;
+  }
+
+  int register_extra_property(char* name, int dim) {
+    //Add name and dim to list
+    names.h_view(nproperties) = name;
+    dims.h_view(nproperties) = dim;
+    modify_host(0);
+    sync_device(0);
+    nproperties++;
+    //Grow flat_data
+    grow(nmax);
+    //Return index
+    return nproperties - 1;
+  }
+
+  void grow(int new_nmax) {
+    //Check new size, return if strictly smaller than nmax (equal to can be resizing for new props)
+    if (new_nmax < nmax) return;
+    //Compute new size and offsets array
+    int new_total_elems = 0;
+    for (int i = 0; i < nproperties; i++) {
+      offsets.h_view(i) = new_total_elems;
+      new_total_elems += new_namx * dims.h_view(i);
+    }
+    modify_host(0);
+    sync_device(0);
+    //Allocate a new view with new size
+    DAT::tdual_float_1d new_view("resizedExtraProperties", new_total_elems);
+    //Copy all existing elements to new view
+    if (max_num_elems != 0) {
+      auto newSubViewD = Kokkos::subview(new_view.d_view, std::make_pair(0, max_num_elems));
+      auto newSubViewH = Kokkos::subview(new_view.h_view, std::make_pair(0, max_num_elems));
+      Kokkos::deepcopy(newSubViewD, flat_data.d_view);
+      Kokkos::deepcopy(newSubViewH, flat_data.h_view);
+      flat_data = new_view;
+    }
+    //Finally assign new max_elems and nmax
+    nmax = new_namx;
+    num_max_elems = new_total_elems;
+  }
+
+  /*//Flat data only set to 1 will only mark flat_data has modified
+  void modify_host(int flat_data_only = 1) {
+    flat_data.modify<Kokkos::HostSpace>();
+    if (flat_data_only != 1) {
+      offsets.modify<Kokkos::HostSpace>();
+      dims.modify<Kokkos::HostSpace>();
+      names.modify<Kokkos::HostSpace>();
+    }
+  }
+
+  void modify_device(int flat_data_only = 1) {
+    flat_data.modify<execution_space>();
+    if (flat_data_only != 1) {
+      offsets.modify<execution_space>();
+      dims.modify<execution_space>();
+      names.modify<execution_space>();
+    }
+  }
+
+  void sync_host(int flat_data_only = 1) {
+    flat_data.sync<Kokkos::HostSpace>();
+    if (flat_data_only != 1) {
+      offsets.sync<Kokkos::HostSpace>();
+      dims.sync<Kokkos::HostSpace>();
+      names.sync<Kokkos::HostSpace>();
+    }
+  }
+
+  void sync_device(int flat_data_only = 1) {
+    flat_data.sync<execution_space>();
+    if (flat_data_only != 1) {
+      offsets.sync<execution_space>();
+      dims.sync<execution_space>();
+      names.sync<execution_space>();
+    }
+  }*/
+}; 
+
 template <class DeviceType> class MLIAPDataKokkos : public MLIAPData {
  public:
   MLIAPDataKokkos(class LAMMPS *, int, int *, class MLIAPModel *, class MLIAPDescriptor *,
